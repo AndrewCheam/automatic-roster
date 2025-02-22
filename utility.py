@@ -1,53 +1,80 @@
 from itertools import permutations
 from itertools import product
+import numpy as np
 
-ws_lead, support_singer, guitarist, pianist, drummer, bassist = None, None, None, None, None, None
-ws_lead_dict = {'Andrew': 3, 'Yu Tang': 2, 'Wei En': 2, 'Noelle': 1, 'Chi Fei': 3, 'Chloe': 2, 'Rissa': 3, 'Gabriel': 2}
-support_singer_dict = {'Jeremiah': 2, 'Zilu': 3}
+ws_lead_dict = {'Andrew': 3, 'Yu Tang': 2, 'Wei En': 2, 'Noelle': 1, 'Chloe': 2, 'Rissa': 3}
+support_singer_dict = {'Jeremiah': 2, 'Zilu': 3, 'Chi Fei': 3}
 guitarist_dict = {'Andrew': 3, 'Rissa': 2, 'Wei En': 2, 'Gabriel': 3, 'Jurina': 1}
 pianist_dict = {'Wei En': 2, 'Ethan': 3, 'Jessica Wang': 2, 'Zilu': 1, 'Eliza': 3}
 drummer_dict = {'Samuel': 3, 'Gabriel': 2, 'Jenson': 3, 'Mavis': 2}
 bassist_dict = {'Chi Fei': 3, 'Wei En': 2}
 
+# support_singer_dict = {}
+bassist_dict = {}
 
-all_dict = [ws_lead_dict, support_singer_dict, guitarist_dict, pianist_dict, drummer_dict, bassist_dict]
+
+job_dicts = [ws_lead_dict, support_singer_dict, guitarist_dict, pianist_dict, drummer_dict, bassist_dict]
+jobs = ['ws_lead', 'support_singer', 'guitarist', 'pianist', 'drummer', 'bassist']
 
 
-# Generate all permutations of the unique candidates
-def get_perms(the_set: set, the_len: int):
+
+###################################################################################### MAIN FUNCTIONS WHICH ARE USED ##################################################################################
+def get_perms_single_day(avail_people: set):
     res = []
+    avail_dicts, avail_jobs, not_avail_jobs = get_avail_jobs(avail_people)
+    for perm in permutations(avail_people, len(avail_dicts)):
+        valid_perm = True
+        for i, avail_dict in enumerate(avail_dicts):
+            if perm[i] not in avail_dict:
+                valid_perm = False
+                break
+        if not valid_perm:
+            continue
 
-    for perm in permutations(the_set, the_len):
-        ws_lead, support_singer, guitarist, pianist, drummer, bassist = perm
-
-        # Enforce constraints:
-        if ws_lead not in ws_lead_dict:  # ws_lead must be qualified
-            continue
-        if support_singer not in support_singer_dict:  # support singer must be qualified
-            continue
-        if guitarist not in guitarist_dict:  # guitarist must be qualified
-            continue
-        if pianist not in pianist_dict:  # pianist must be qualified
-            continue
-        if drummer not in drummer_dict:  # drummer must be qualified
-            continue
-        if bassist not in bassist_dict:  # bassist must be qualified
-            continue
-        
-        # Print valid assignment
-        total_score = ws_lead_dict[ws_lead] + support_singer_dict[support_singer]+ guitarist_dict[guitarist] + pianist_dict[pianist] + drummer_dict[drummer] + bassist_dict[bassist]
-        res.append({
-            'ws_lead': ws_lead, 
-            'support_singer': support_singer, 
-            'guitarist': guitarist, 
-            'pianist': pianist, 
-            'drummer': drummer,
-            'bassist': bassist,
-            'score': total_score})
+        total_score = sum([avail_dicts[i][perm[i]] for i in range(len(avail_dicts))])
+        final_dict = { k:v for (k,v) in zip(avail_jobs, perm)}  
+        final_dict['people'] = set(final_dict.values())
+        for job in not_avail_jobs:
+            final_dict[job] = np.nan
+        final_dict['total_score'] = total_score
+        res.append(final_dict)
     return res
+    
 
-
-def get_all_combinations(date_combinations):
+def get_comb_multi_day(date_combinations):
     combinations = list(product(*date_combinations))
     # Check the total number of combinations
     return combinations
+
+           
+def get_comb_multi_day_b2b_constraint(lists):
+   results = []
+   dfs(lists, 0, [], results)
+   return results
+
+################################################################### HELPER FUNCTIONS FOR OTHER FUNCTIONS #####################################################################
+def b2b_roster(roster1, roster2):
+    return bool(roster1['people'] & roster2['people'])
+    
+def dfs(lists, index, path, results):
+   if index == len(lists):  # If we have selected from all lists
+       results.append(path[:])  # Store a copy of the current selection
+       return
+   for x in lists[index]:  
+       if index == 0 or not b2b_roster(x, path[-1]):  # Constraint: Ensure same people are not rostered twice in a row
+           path.append(x)
+           dfs(lists, index + 1, path, results)
+           path.pop()  # Backtrack
+           
+def get_avail_jobs(avail_people):
+    avail_dicts = []
+    avail_jobs = []
+    not_avail_jobs = []
+    for i, job_dict in enumerate(job_dicts):
+        if bool(set(job_dict.keys()) & avail_people):
+            avail_dicts.append(job_dict)
+            avail_jobs.append(jobs[i])
+        else:
+            not_avail_jobs.append(jobs[i])
+    return avail_dicts, avail_jobs, not_avail_jobs
+    
