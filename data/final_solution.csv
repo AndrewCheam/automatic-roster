@@ -1,12 +1,5 @@
 ,Job,Week 0,Week 1,Week 2,Week 3,Week 4,Week 5,Week 6,Week 7,Week 8,Week 9,Week 10,Week 11,Week 12
-0,Coordinator(M),WeiXuan,WeiXuan,YeapYuXuan,AndrewCheam,AndrewCheam,WeiXuan,AndrewCheam,YeapYuXuan,FamHanFeng,WeiXuan,YeapYuXuan,FamHanFeng,YeapYuXuan
-1,Livestream#1(M),YapMengHong,YapMengHong,,YapMengHong,,YapMengHong,YapMengHong,,YapMengHong,YapMengHong,,YapMengHong,YapMengHong
-2,Sound#1(M),ShermanLee,WonSen,WonSen,SingYe,SingYe,WonSen,SingYe,ShermanLee,ShermanLee,WonSen,SingYe,ShermanLee,SingYe
-3,Sound#2(M),WonSen,ShermanLee,SingYe,ShermanLee,WonSen,SingYe,WonSen,WonSen,SingYe,ShermanLee,WonSen,SingYe,ShermanLee
-4,Projectionist(M),FredKwan,FredKwan,IanMing,IanMing,HongTao,CheeFookSeng,CheeFookSeng,IanMing,FredKwan,CheeFookSeng,IanMing,HongTao,HongTao
-5,Coordinator(B),TimothyKwan,Jurina,TimothyKwan,Jurina,WeiXuan,Jurina,TitusLeong,AndrewCheam,Jurina,YeapYuXuan,Jurina,AndrewCheam,WeiXuan
-6,Livestream#1(B),MuTian,CheamHingGee,TengZhiQian,HungSweeGeok,KooYuTang,MuTian,HungSweeGeok,CheamHingGee,KooYuTang,CheamHingGee,MuTian,KooYuTang,TengZhiQian
-7,Livestream#2(B),TengZhiQian,KooYuTang,CheamHingGee,TengZhiQian,HungSweeGeok,KooYuTang,MuTian,MuTian,CheamHingGee,TengZhiQian,FamHanFeng,HungSweeGeok,HungSweeGeok
-8,Sound#1(B),JairusChong,ShawnHew,ShawnHew,Jeffrey,JeremyFam,Jeffrey,JairusChong,TitusLeong,TitusLeong,ShawnHew,JairusChong,JeremyFam,JeremyFam
-9,Sound#2(B),ShawnHew,FamHanFeng,TitusLeong,ShawnHew,TitusLeong,FamHanFeng,JeremyFam,JairusChong,JeremyFam,Jeffrey,Jeffrey,JairusChong,Jeffrey
-10,Projectionist(B),HoSiawEng,TimothyKwan,HoSiawEng,HoSiawEng,Elly,HoSiawEng,HoSiawEng,Elly,TimothyKwan,Elly,TimothyKwan,Elly,Elly
+0,Guitar,Jill,Jack,Jill,Jack,Jill,Jack,Jill,Jack,Jack,Jill,Jack,Jack,Jill
+1,Piano,mary,mary,Jeff,mary,mary,Jill,mary,Jeff,Jill,mary,Jeff,mary,mary
+2,Leader,whee,Jeff,whee,Jeff,whee,Jeff,whee,whee,Jeff,whee,whee,Jeff,Jack
+3,Waterboy,John,,John,John,,John,John,,John,John,,John,John
