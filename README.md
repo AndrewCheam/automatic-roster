@@ -33,19 +33,24 @@ The system requires the following CSV files:
 4. `data/custom_constraints.csv` (optional) - Defines additional constraints such as max roster limits and minimum proficiency levels.
 
 ## Usage
-### Step 1: Load Data
-Ensure all data files are correctly formatted and placed in the `data/` directory. The script will validate the data before proceeding.
-
-### Step 2: Run the Scheduler
-Execute the script:
+### Step 1: Run the Streamlit Web App
+Launch the interactive web app using Streamlit:
 ```bash
-python schedule.py
+streamlit run app.py
 ```
-This will generate an optimized roster based on the defined constraints.
+This will open a web interface for uploading CSV files and generating a roster.
 
-### Step 3: View Results
-- The optimal schedule is displayed in the console.
-- A CSV file containing the final schedule is saved as `data/final_solution.csv`.
+### Step 2: Upload Data
+On the webpage, upload the required CSV files:
+- Availability File
+- Skills Mapping File
+- Jobs File
+
+The system will process the files and display the uploaded data before scheduling.
+
+### Step 3: Generate and View the Roster
+- The optimized schedule is displayed on the web interface.
+- A downloadable CSV file (`final_solution.csv`) is generated for further use.
 
 ## Constraints Implemented
 - **Job Assignment:** Every crucial job must be assigned exactly once per week.
@@ -69,6 +74,13 @@ Total Assignments per Member:
   - Bob: 3 jobs assigned
   - Charlie: 2 jobs assigned
 ```
+
+## Work in Progress
+- **UI Enhancements:** Improving the web interface for better usability and visualization.
+- **Analytics & Insights:** Adding features to analyze:
+  - How many times each member is rostered.
+  - Skill distribution among rostered members.
+  - Fairness metrics and workload balancing.
 
 ## Troubleshooting
 If the script does not find an optimal solution:
