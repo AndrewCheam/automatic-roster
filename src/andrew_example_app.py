@@ -15,7 +15,14 @@ def convert_df_to_csv(df):
     return output
 
 
-    
+with st.sidebar:
+    st.title("Guided Tour")
+    st.markdown("""
+    **Step 1**: Upload your **Availability File**  (CSV/XLSX).  
+    **Step 2**: Upload the **Skills File**  (CSV/XLSX).  
+    **Step 3**: Upload the **Jobs File** (CSV/XLSX).  
+    **Step 4**: After uploading, you will be able to download the **processed schedule**.
+    """)    
 
 
 st.title("Church Duties Scheduling Tool")
@@ -24,7 +31,9 @@ date_availability_file = st.file_uploader("Upload Availability File", type=["csv
 skills_mapping_file = st.file_uploader("Upload Skills File", type=["csv", "xlsx", "xls"], key=2)
 jobs_file = st.file_uploader("Upload Jobs File", type=["csv", "xlsx", "xls"], key=3)
 
-
+if not (date_availability_file and skills_mapping_file and jobs_file):
+    st.info("Please upload the required files to start processing.")
+    st.stop()
 
 if date_availability_file and skills_mapping_file and jobs_file:
     # Read the files first
