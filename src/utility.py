@@ -3,8 +3,7 @@ import pandas as pd
 import numpy as np
 from test import test_data
 
-def get_data_from_csv(date_availability_file, skills_mapping_file, jobs_file):
-    
+def get_df_from_app(date_availability_file, skills_mapping_file, jobs_file):
     if date_availability_file is None:
         raise ValueError("Error: Availability file not provided!")
     if skills_mapping_file is None:
@@ -13,20 +12,33 @@ def get_data_from_csv(date_availability_file, skills_mapping_file, jobs_file):
         raise ValueError("Error: Jobs file not provided!")
 
     try:
-        availability_df = pd.read_csv(date_availability_file, index_col=0)
-        skills_df = pd.read_csv(skills_mapping_file, index_col=0)
-        jobs_df = pd.read_csv(jobs_file, index_col=0)
-    except pd.errors.EmptyDataError:
-        raise ValueError("Error: One or more CSV files are empty!")
-    except pd.errors.ParserError:
-        raise ValueError("Error: CSV files contain incorrect formatting!")
+        if date_availability_file.type == "text/csv":
+            availability_df = pd.read_csv(date_availability_file, index_col=0)
+        elif date_availability_file.type in ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"]:
+            availability_df = pd.read_excel(date_availability_file, index_col=0)
+
+        if skills_mapping_file.type == "text/csv":
+            skills_df = pd.read_csv(skills_mapping_file, index_col=0)
+        elif skills_mapping_file.type in ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"]:
+            skills_df = pd.read_excel(skills_mapping_file, index_col=0)
+
+        if jobs_file.type == "text/csv":
+            jobs_df = pd.read_csv(jobs_file, index_col=0)
+        elif jobs_file.type in ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"]:
+            jobs_df = pd.read_excel(jobs_file, index_col=0)
     
-    # availability_df = pd.read_csv(date_availability_file, index_col=0)
-    # skills_df = pd.read_csv(skills_mapping_file, index_col=0)
-    # jobs_df = pd.read_csv(jobs_file, index_col=0)
+    except pd.errors.EmptyDataError:
+        raise ValueError("Error: One or more files are empty!")
+    except pd.errors.ParserError:
+        raise ValueError("Error: files contain incorrect formatting!")
 
     test_data(availability_df, skills_df, jobs_df)
+    return availability_df, skills_df, jobs_df
 
+def get_data_from_csv(date_availability_file, skills_mapping_file, jobs_file):
+    
+    availability_df, skills_df, jobs_df = get_df_from_app(date_availability_file, skills_mapping_file, jobs_file)
+    
     availability_df = availability_df.set_index("Names")
     skills_df = skills_df.set_index("Names")
 
@@ -208,7 +220,7 @@ def schedule_jobs(date_availability_file, skills_mapping_file, jobs_file):
         return None
 
 
-### ONLY USED IN DEBUGGING ###
+### ONLY USED IN DEBUGGING FOR NOTEBOOKS###
 class JobPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
     """Print intermediate solutions, including total assignments per member."""
 

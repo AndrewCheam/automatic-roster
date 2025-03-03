@@ -16,20 +16,21 @@ def convert_df_to_csv(df):
 
 st.title("Church Duties Scheduling Tool")
 
-date_availability_file = st.file_uploader("Upload Availability File", type=["csv"], key=1)
-skills_mapping_file = st.file_uploader("Upload Skills File", type=["csv"], key=2)
-jobs_file = st.file_uploader("Upload Jobs File", type=["csv"], key=3)
+date_availability_file = st.file_uploader("Upload Availability File", type=["csv", "xlsx", "xls"], key=1)
+skills_mapping_file = st.file_uploader("Upload Skills File", type=["csv", "xlsx", "xls"], key=2)
+jobs_file = st.file_uploader("Upload Jobs File", type=["csv", "xlsx", "xls"], key=3)
+
 
 if date_availability_file and skills_mapping_file and jobs_file:
     # Read the files first
-    availability_df = pd.read_csv(date_availability_file)
-    skills_df = pd.read_csv(skills_mapping_file)
-    jobs_df = pd.read_csv(jobs_file)
+    # availability_df = pd.read_csv(date_availability_file)
+    # skills_df = pd.read_csv(skills_mapping_file)
+    # jobs_df = pd.read_csv(jobs_file)
 
     # Display them in Streamlit
-    st.write("### Availability CSV:", availability_df)
-    st.write("### Skills CSV:", skills_df)
-    st.write("### Jobs CSV:", jobs_df)
+    # st.write("### Availability CSV:", availability_df)
+    # st.write("### Skills CSV:", skills_df)
+    # st.write("### Jobs CSV:", jobs_df)
 
     # Reset file pointers before passing to another function, if not the file 'gets consumed the first time'
     date_availability_file.seek(0)
