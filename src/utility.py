@@ -1,7 +1,7 @@
 from ortools.sat.python import cp_model
 import pandas as pd
 import numpy as np
-from test import test_data
+from test import test_data, test_solution
 
 def get_df_from_app(date_availability_file, skills_mapping_file, jobs_file):
     if date_availability_file is None:
@@ -109,9 +109,9 @@ def get_model(jobs_df, availability_df, skills_df, all_members, all_weeks, all_j
         for w_idx in range(len(all_weeks) - 2):  
             for j in all_jobs:
                 model.Add(
-                    shifts[(m, all_weeks[w_idx], j)] +
-                    shifts[(m, all_weeks[w_idx + 1], j)] +
-                    shifts[(m, all_weeks[w_idx + 2], j)]
+                    sum([shifts[(m, all_weeks[w_idx], j)] for j in all_jobs]) +
+                    sum([shifts[(m, all_weeks[w_idx + 1], j)] for j in all_jobs]) +
+                    sum([shifts[(m, all_weeks[w_idx + 2], j)] for j in all_jobs])
                     <= 2
                 )
 
@@ -202,6 +202,8 @@ def schedule_jobs(date_availability_file, skills_mapping_file, jobs_file):
     if status == cp_model.OPTIMAL:
         print("\nOptimal solution found!")
         solution_df = generate_schedule_df(solver, shifts, all_members, all_weeks, all_jobs)
+        test_solution(solution_df, availability_df, skills_df)
+
         # solution_df.to_csv('data/final_solution.csv')
         
         # Print total assignments per member
