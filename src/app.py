@@ -1,11 +1,14 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-from utility import schedule_jobs
+# from utility import schedule_jobs
+from JobScheduler import JobScheduler
 
 def process_csv(date_availability_file, skills_mapping_file, jobs_file):
     # Modify this function to process the CSV as needed
-    df = schedule_jobs(date_availability_file, skills_mapping_file, jobs_file)
+    # df = schedule_jobs(date_availability_file, skills_mapping_file, jobs_file)
+    js = JobScheduler(date_availability_file, skills_mapping_file, jobs_file)
+    df = js.schedule_jobs()
     return df
 
 def convert_df_to_csv(df):
@@ -41,7 +44,7 @@ if date_availability_file and skills_mapping_file and jobs_file:
     # skills_df = pd.read_csv(skills_mapping_file)
     # jobs_df = pd.read_csv(jobs_file)
 
-    # Display them in Streamlit
+    # # Display them in Streamlit
     # st.write("### Availability CSV:", availability_df)
     # st.write("### Skills CSV:", skills_df)
     # st.write("### Jobs CSV:", jobs_df)
