@@ -143,8 +143,34 @@ def get_model(jobs_df, availability_df, skills_df, all_members, all_weeks, all_j
     for m in all_members:
         model.AddMultiplicationEquality(squared_deviation[m], [deviation[m], deviation[m]])
 
+    # Define back-to-back assignment count per member
+    back_to_back = {
+        m: model.NewIntVar(0, len(all_weeks) - 1, f"back_to_back_{m}")
+        for m in all_members
+    }
+    for m in all_members:
+        consecutive_assignments = []
+        
+        for w_idx in range(len(all_weeks) - 1):  # Iterate through weeks except the last
+            is_rostered_w = model.NewBoolVar(f"is_rostered_{m}_{all_weeks[w_idx]}")
+            is_rostered_w_next = model.NewBoolVar(f"is_rostered_{m}_{all_weeks[w_idx + 1]}")
+            
+            # Define whether the member is rostered in week w and week w+1
+            model.Add(is_rostered_w == sum(shifts[(m, all_weeks[w_idx], j)] for j in all_jobs))
+            model.Add(is_rostered_w_next == sum(shifts[(m, all_weeks[w_idx + 1], j)] for j in all_jobs))
+
+            # If both are 1, then back-to-back is counted
+            consecutive = model.NewBoolVar(f"consecutive_{m}_{all_weeks[w_idx]}")
+            model.AddMultiplicationEquality(consecutive, [is_rostered_w, is_rostered_w_next])   # Multiply to check if both are 1
+            consecutive_assignments.append(consecutive)
+
+        # Sum all consecutive assignments to get the total back-to-back count
+        model.Add(back_to_back[m] == sum(consecutive_assignments))
+
+
+
     # Minimize variance while ensuring maximum total assignments
-    model.Minimize(-sum(total_assignments[m] for m in all_members) * 10 + sum(squared_deviation[m] for m in all_members))
+    model.Minimize(-sum(total_assignments[m] for m in all_members) * 10 + sum(squared_deviation[m] for m in all_members) + sum(back_to_back[m] for m in all_members) * 10)
 
     return model, shifts, total_assignments
 
