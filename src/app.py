@@ -4,10 +4,9 @@ from io import BytesIO
 # from utility import schedule_jobs
 from JobScheduler import JobScheduler
 
-def process_csv(date_availability_file, skills_mapping_file, jobs_file):
+def process_csv(date_availability_file, skills_mapping_file, jobs_file, **kwargs):
     # Modify this function to process the CSV as needed
-    # df = schedule_jobs(date_availability_file, skills_mapping_file, jobs_file)
-    js = JobScheduler(date_availability_file, skills_mapping_file, jobs_file)
+    js = JobScheduler(date_availability_file, skills_mapping_file, jobs_file, **kwargs)
     df = js.schedule_jobs()
     return df
 
@@ -33,6 +32,7 @@ st.title("Church Duties Scheduling Tool")
 date_availability_file = st.file_uploader("Upload Availability File", type=["csv", "xlsx", "xls"], key=1)
 skills_mapping_file = st.file_uploader("Upload Skills File", type=["csv", "xlsx", "xls"], key=2)
 jobs_file = st.file_uploader("Upload Jobs File", type=["csv", "xlsx", "xls"], key=3)
+max_roster_file = st.file_uploader("Upload Max Roster File", type=["csv", "xlsx", "xls"], key=4)
 
 if not (date_availability_file and skills_mapping_file and jobs_file):
     st.info("Please upload the required files to start processing.")
@@ -54,7 +54,7 @@ if date_availability_file and skills_mapping_file and jobs_file:
         skills_mapping_file.seek(0)
         jobs_file.seek(0)
         
-        processed_df = process_csv(date_availability_file, skills_mapping_file, jobs_file)
+        processed_df = process_csv(date_availability_file, skills_mapping_file, jobs_file, max_roster_file = max_roster_file)
         st.write("### Processed CSV:", processed_df)
         
         csv_data = convert_df_to_csv(processed_df)

@@ -1,8 +1,10 @@
 from ortools.sat.python import cp_model
+import pandas as pd
 
 class ScheduleModel:
-    def __init__(self, availability_df, skills_df, jobs_df, all_members, all_weeks, all_jobs, crucial_jobs, non_crucial_jobs):
+    def __init__(self, availability_df, skills_df, jobs_df, all_members, all_weeks, all_jobs, crucial_jobs, non_crucial_jobs, **kwargs):
         
+        # Base Requirements
         self.availability_df = availability_df
         self.skills_df = skills_df
         self.jobs_df = jobs_df
@@ -17,8 +19,14 @@ class ScheduleModel:
         self.back_to_back = {}
         self.deviation = {}
         self.squared_deviation = {}
+        
+        # Custom Requirements
+        self.max_roster_df = kwargs.get('max_roster_df') # None if not present
+
+        # Set Constraints and Objectives
         self._create_variables()
-        self._add_hard_constraints()
+        self._add_base_constraints()
+        self._add_custom_constraints()
         self._set_objective()
     
     def _create_variables(self):
@@ -47,7 +55,7 @@ class ScheduleModel:
             for m in self.all_members
         }
 
-    def _add_hard_constraints(self):
+    def _add_base_constraints(self):
         # Crucial job assignment constraints
         for w in self.all_weeks:
             for j in self.crucial_jobs:
@@ -86,6 +94,16 @@ class ScheduleModel:
                     sum([self.shifts[(m, self.all_weeks[w_idx + 2], j)] for j in self.all_jobs])
                     <= 2
                 )
+
+    def _add_custom_constraints(self):
+        try:
+            if isinstance(self.max_roster_df, pd.DataFrame):
+                for m in self.all_members:
+                    max_shifts = self.max_roster_df.loc[m, "max_roster"]
+                    if max_shifts != -1:  # Only enforce if there is a limit
+                        self.model.Add(self.total_assignments[m] <= max_shifts)
+        except:
+            raise ValueError("One of the custom constraint didnt work...")
     
     def _set_objective(self):
         avg_assignments = len(self.all_weeks) * len(self.all_jobs) // len(self.all_members)

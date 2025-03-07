@@ -1,7 +1,7 @@
 import pandas as pd
 from test import test_data
 
-def load_data(date_availability_file, skills_mapping_file, jobs_file):
+def load_base_data(date_availability_file, skills_mapping_file, jobs_file):
     if not all([date_availability_file, skills_mapping_file, jobs_file]):
         raise ValueError("Error: One or more files not provided!")
     
@@ -19,8 +19,8 @@ def load_data(date_availability_file, skills_mapping_file, jobs_file):
 def validate_data(availability_df, skills_df, jobs_df):
     test_data(availability_df, skills_df, jobs_df)
 
-def get_data(date_availability_file, skills_mapping_file, jobs_file):
-    availability_df, skills_df, jobs_df = load_data(date_availability_file, skills_mapping_file, jobs_file)
+def get_base_data(date_availability_file, skills_mapping_file, jobs_file):
+    availability_df, skills_df, jobs_df = load_base_data(date_availability_file, skills_mapping_file, jobs_file)
     
     all_members = list(availability_df.index)
     all_weeks = availability_df.columns
@@ -29,3 +29,23 @@ def get_data(date_availability_file, skills_mapping_file, jobs_file):
     non_crucial_jobs = list(jobs_df['Jobs'][jobs_df['Crucial'] == 0])
     
     return availability_df, skills_df, jobs_df, all_members, all_weeks, all_jobs, crucial_jobs, non_crucial_jobs
+
+
+def load_custom_data(**optional_files):
+    df_output_dict = {}
+    if 'max_roster_file' in optional_files:
+        max_roster_file = optional_files.get('max_roster_file')
+        try:
+            max_roster_df = pd.read_csv(max_roster_file, index_col=0) if max_roster_file.type == "text/csv" else pd.read_excel(max_roster_file, index_col=0)
+            df_output_dict['max_roster_df'] = max_roster_df.set_index("Names")
+        except (pd.errors.EmptyDataError, pd.errors.ParserError):
+            raise ValueError("Error: Invalid file format or empty files!")
+    
+    return df_output_dict
+
+def get_custom_data(**optional_files):
+    return load_custom_data(**optional_files)
+
+def validate_data(availability_df, skills_df, jobs_df):
+    test_data(availability_df, skills_df, jobs_df)
+
