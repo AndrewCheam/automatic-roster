@@ -4,9 +4,9 @@ from io import BytesIO
 # from utility import schedule_jobs
 from JobScheduler import JobScheduler
 
-def process_csv(date_availability_file, skills_mapping_file, jobs_file, **kwargs):
+def process_csv(**kwargs):
     # Modify this function to process the CSV as needed
-    js = JobScheduler(date_availability_file, skills_mapping_file, jobs_file, **kwargs)
+    js = JobScheduler(**kwargs)
     df = js.schedule_jobs()
     return df
 
@@ -54,7 +54,7 @@ if date_availability_file and skills_mapping_file and jobs_file:
         skills_mapping_file.seek(0)
         jobs_file.seek(0)
         
-        processed_df = process_csv(date_availability_file, skills_mapping_file, jobs_file, max_roster_file = max_roster_file)
+        processed_df = process_csv(date_availability_file = date_availability_file, skills_mapping_file = skills_mapping_file, jobs_file = jobs_file, max_roster_file = max_roster_file)
         st.write("### Processed CSV:", processed_df)
         
         csv_data = convert_df_to_csv(processed_df)

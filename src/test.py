@@ -1,31 +1,48 @@
 
 
-def test_data(availability_df, skills_df, jobs_df):
+def test_data(**kwargs):
+
+    require_names_check = ['availability_df', 'skills_df', 'max_roster_df']
+    df_with_names = {k: v for k, v in kwargs.items() if k in require_names_check}
 
     print('Testing Data Quality...')
+    check_names(**df_with_names)
     
-    print("Checking if names appear in availability file")
-    assert('Names' in availability_df.columns), "Ensure that Names column is in date_availability file"
+
+    # print("Checking that Jobs in job file exists")
+    # assert('Crucial' in jobs_df.columns), "jobs file needs to have Jobs and Crucial columns!"
     
-    print("Checking if names appear in skills_mapping file")
-    assert('Names' in skills_df.columns), "Ensure that Names column is in skills_mapping file"
-
-    print("Checking for duplicate names in availability file")
-    assert(len(availability_df['Names']) == len(set(availability_df['Names']))), "Ensure that Names are unique in date_availability file"
-
-    print("Checking for duplicate names in skills_mapping file")
-    assert(len(skills_df['Names']) == len(set(skills_df['Names']))), "Ensure that Names are unique in skills_mapping file"
-
-    print("Checking that Names in both availability and skills_mapping files match")
-    assert(set(availability_df['Names']) == set(skills_df['Names'])), "date_availability file needs to have same member names as skills_mapping file!"
-
-    print("Checking that Jobs in job file exists")
-    assert('Jobs' in jobs_df.columns and 'Crucial' in jobs_df.columns), "jobs file needs to have Jobs and Crucial columns!"
+    # print("Checking that Jobs in both jobs and skills_mapping files match")
+    # assert(set(jobs_df.index) == (set(skills_df.columns))), "jobs file needs to have same jobs as skills_mapping file!"
     
-    print("Checking that Jobs in both jobs and skills_mapping files match")
-    assert(set(jobs_df['Jobs']) == (set(skills_df.columns) - {'Names'})), "jobs file needs to have same jobs as skills_mapping file!"
+    
 
     print('Data Quality is great!')
+
+def check_names(**kwargs):
+    print('Checking Names')
+    
+    for df_name, df in kwargs.items():
+        print(f"Checking if duplicate names appear in {df_name} file")
+        assert(len(df.index) == len(set(df.index))),f"Ensure that Names are unique in {df_name} file"
+
+    prev_df = None  # Initialize previous value
+
+    for idx, (df_name, df) in enumerate(kwargs.items()):
+        # Check if current value has same names as previous value (but skip first iteration)
+        if idx > 0:
+            # Check whether they have the same names
+            print(f"Checking that Names in both {df_name} and {prev_df_name} files match")
+            assert(set(df.index) == set(prev_df.index)), f"{prev_df_name} file needs to have same member names as {df_name} file!"
+
+        prev_df = df  # Update previous value for the next iteration
+        prev_df_name = df_name
+
+
+    
+
+
+
 
 def test_solution(solution_df, availability_df, skills_df):
     # Test Cases based on user custom choices

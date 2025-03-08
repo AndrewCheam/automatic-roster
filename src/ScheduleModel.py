@@ -2,17 +2,17 @@ from ortools.sat.python import cp_model
 import pandas as pd
 
 class ScheduleModel:
-    def __init__(self, availability_df, skills_df, jobs_df, all_members, all_weeks, all_jobs, crucial_jobs, non_crucial_jobs, **kwargs):
+    def __init__(self, **kwargs):
         
         # Base Requirements
-        self.availability_df = availability_df
-        self.skills_df = skills_df
-        self.jobs_df = jobs_df
-        self.all_members = all_members
-        self.all_weeks = all_weeks
-        self.all_jobs = all_jobs
-        self.crucial_jobs = crucial_jobs
-        self.non_crucial_jobs = non_crucial_jobs
+        self.availability_df = kwargs['availability_df']
+        self.skills_df = kwargs['skills_df']
+        self.jobs_df = kwargs['jobs_df']
+        self.all_members = kwargs['all_members']
+        self.all_weeks = kwargs['all_weeks']
+        self.all_jobs = kwargs['all_jobs']
+        self.crucial_jobs = kwargs['crucial_jobs']
+        self.non_crucial_jobs = kwargs['non_crucial_jobs']
         self.model = cp_model.CpModel()
         self.shifts = {}
         self.total_assignments = {}
