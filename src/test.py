@@ -9,16 +9,13 @@ def test_data(**kwargs):
     check_names(**df_with_names)
     
 
-    # print("Checking that Jobs in job file exists")
-    # assert('Crucial' in jobs_df.columns), "jobs file needs to have Jobs and Crucial columns!"
+    print("Checking that Jobs in job file exists")
+    assert('Crucial' in kwargs['jobs_df'].columns), "jobs file needs to have Jobs and Crucial columns!"
     
-    # print("Checking that Jobs in both jobs and skills_mapping files match")
-    # assert(set(jobs_df.index) == (set(skills_df.columns))), "jobs file needs to have same jobs as skills_mapping file!"
+    print("Checking that Jobs in both jobs and skills_mapping files match")
+    assert(set(kwargs['jobs_df'].index) == (set(kwargs['skills_df'].columns))), "jobs file needs to have same jobs as skills_mapping file!"
     
-    
-
     print('Data Quality is great!')
-
 def check_names(**kwargs):
     print('Checking Names')
     
@@ -38,43 +35,37 @@ def check_names(**kwargs):
         prev_df = df  # Update previous value for the next iteration
         prev_df_name = df_name
 
-
-    
-
-
-
-
 def test_solution(solution_df, availability_df, skills_df):
     # Test Cases based on user custom choices
 
     # Basic Solution Test Cases
-    test_tri_roster_constraint(solution_df)
+    # test_n_roster_constraint(solution_df, max_b2b = 2)
     test_availability(solution_df, availability_df)
     test_skill_match(solution_df, skills_df)
 
-def test_tri_roster_constraint(solution_df):
-    counter = {}
-    date_cols = solution_df.columns[1:]  # Exclude the job column
+# def test_n_roster_constraint(solution_df, max_b2b):
+#     counter = {}
+#     date_cols = solution_df.columns[1:]  # Exclude the job column
+#     assert(max_b2b >= 1), "Max back to back roster has to be more than 0"
+#     for idx, date in enumerate(date_cols):
+#         if idx >= max_b2b:
+#             # Check if any person is rostered more than twice in a row
+#             assert all([(name not in counter) or (counter[name] < max_b2b) 
+#                         for name in solution_df[date].dropna().values]), \
+#                         f"Error with algorithm: {date} has a person rostered {max_b2b + 1} times in a row!"
 
-    for idx, date in enumerate(date_cols):
-        if idx >= 2:
-            # Check if any person is rostered more than twice in a row
-            assert all([(name not in counter) or (counter[name] < 2) 
-                        for name in solution_df[date].dropna().values]), \
-                        f"Error with algorithm: {date} has a person rostered three times in a row!"
-
-            # Remove column which was 2 steps ago from the counter
-            for name in solution_df[date_cols[idx - 2]].dropna().values:
-                if name in counter:
-                    counter[name] -= 1
-                    if counter[name] == 0:
-                        del counter[name]  # Clean up
-                else:
-                    raise ValueError(f"Unexpected issue: {name} not found in counter while decrementing")
+#             # Remove column which was 2 steps ago from the counter
+#             for name in solution_df[date_cols[idx - max_b2b]].dropna().values:
+#                 if name in counter:
+#                     counter[name] -= 1
+#                     if counter[name] == 0:
+#                         del counter[name]  # Clean up
+#                 else:
+#                     raise ValueError(f"Unexpected issue: {name} not found in counter while decrementing")
         
-        # Add new column into the counter
-        for name in solution_df[date].dropna().values:
-            counter[name] = counter.get(name, 0) + 1
+#         # Add new column into the counter
+#         for name in solution_df[date].dropna().values:
+#             counter[name] = counter.get(name, 0) + 1
 
 def test_availability(solution_df, availability_df):
     date_cols = solution_df.columns[1:]
