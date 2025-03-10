@@ -77,13 +77,16 @@ def load_and_set_index(file, column_name, df_name="DataFrame"):
             df = pd.read_csv(file, index_col=0)
         else:
             df = pd.read_excel(file, index_col=0)
-
-        # Check if the column exists
-        if column_name not in df.columns:
-            raise KeyError(f"Error: '{column_name}' column is missing in {df_name}!")
-
-        # Set the column as the index
-        return df.set_index(column_name)
+        
+        # Check if column name was already set as index
+        if df.index.name == column_name:
+            return df
+        else:
+            # Check if the column exists
+            if column_name not in df.columns:
+                raise KeyError(f"Error: '{column_name}' column is missing in {df_name}!")
+            # Set the column as the index
+            return df.set_index(column_name)
 
     except (pd.errors.EmptyDataError, pd.errors.ParserError):
         raise ValueError(f"Error: Invalid file format or empty file for {df_name}!")
