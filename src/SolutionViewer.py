@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
+import ScheduleModel
 
 class SolutionViewer:
-    def __init__(self, solver, shifts, total_assignments, squared_deviation, all_members, all_weeks, all_jobs):
+    def __init__(self, solver, model:ScheduleModel):
         """
         Initializes the ScheduleGenerator with the solver and scheduling constraints.
         
@@ -15,12 +16,14 @@ class SolutionViewer:
         :param all_jobs: List of all jobs.
         """
         self.solver = solver
-        self.shifts = shifts
-        self.total_assignments = total_assignments
-        self.squared_deviation = squared_deviation
-        self.all_members = all_members
-        self.all_weeks = all_weeks
-        self.all_jobs = all_jobs
+        self.shifts = model.shifts
+        self.total_assignments = model.total_assignments
+        self.squared_deviation = model.squared_deviation
+        self.back_to_back = model.back_to_back
+        self.all_members = model.all_members
+        self.all_weeks = model.all_weeks
+        self.all_jobs = model.all_jobs
+        
         self.schedule_df = None
 
     def generate_schedule_df(self):
@@ -55,5 +58,7 @@ class SolutionViewer:
             total = self.solver.Value(self.total_assignments[m])
             print(f"  - {m}: {total} jobs assigned")
         print(f"Squared Deviation: {sum(self.solver.Value(self.squared_deviation[m]) for m in self.all_members)}")
+        print(f"Back to back rosters: {sum(self.solver.Value(self.back_to_back[m]) for m in self.all_members)}")
+        print(f"Kena Back to Back Roster: {[m for m in self.all_members if self.solver.Value(self.back_to_back[m]) > 0]}")
         
         return None
