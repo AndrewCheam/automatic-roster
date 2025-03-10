@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from JobScheduler import JobScheduler
-import os
+
+st.set_page_config(page_title="Church Duties Scheduler", layout="wide")
 
 def process_csv(**kwargs):
     js = JobScheduler(**kwargs)
@@ -15,82 +16,95 @@ def convert_df_to_csv(df):
     output.seek(0)
     return output
 
-
 def load_demo_file(file_path):
     try:
-        return pd.read_csv(file_path, index_col=0)  # Or pd.read_excel(file_path) if it's an Excel file
+        return pd.read_csv(file_path, index_col=0)
     except FileNotFoundError:
-        st.error(f"**Error:** {file_path} not found.")
+        st.error(f"❌ File not found: {file_path}")
         return None
     except Exception as e:
-        st.error(f"**Error:** Something went wrong while reading {file_path}. Error details: {e}")
+        st.error(f"⚠️ Error loading file: {e}")
         return None
+
+st.title("📅 Church Duties Scheduling Tool")
 
 with st.sidebar:
     st.title("Guided Tour")
     st.markdown("""
-    **Step 1**: Upload your **Availability File** (CSV/XLSX).
-    **Step 2**: Upload the **Skills File** (CSV/XLSX).
-    **Step 3**: Upload the **Jobs File** (CSV/XLSX).
-    **Step 4**: (Optional) Select and upload additional constraint files.
-    **Step 5**: Adjust the weights for scheduling constraints.
-    **Step 6**: Click **Process Schedule** to generate the schedule.
-    **Step 7**: Download the **processed schedule**.
+    **Step 1**: Upload your **Availability File** (CSV/XLSX).\n
+    **Step 2**: Upload the **Skills File** (CSV/XLSX).\n
+    **Step 3**: Upload the **Jobs File** (CSV/XLSX).\n
+    **Step 4**: (Optional) Select and upload additional constraint files.\n
+    **Step 5**: Adjust the weights for scheduling constraints.\n
+    **Step 6**: Click **Process Schedule** to generate the schedule.\n
+    **Step 7**: Download the **processed schedule**.\n
     """)
+    
+    st.subheader("📂 Upload Required Files")
+    date_availability_file = st.file_uploader("📅 Upload Availability File", type=["csv", "xlsx"])
+    skills_mapping_file = st.file_uploader("🛠 Upload Skills File", type=["csv", "xlsx"])
+    jobs_file = st.file_uploader("💼 Upload Jobs File", type=["csv", "xlsx"])
+    
+    use_max_roster = st.checkbox("Include Max Roster File")
+    max_roster_file = st.file_uploader("🔢 Upload Max Roster File", type=["csv", "xlsx"]) if use_max_roster else None
+    
+    st.subheader("⚙️ Adjust Scheduling Priorities")
+    total_assignments_weight = st.slider("🔄 Ensure more jobs are assigned", 0, 100, 50, help="Higher values prioritize filling all jobs.")
+    deviation_weight = st.slider("⚖️ Balance workload among members", 0, 100, 50, help="Higher values distribute work evenly.")
+    back_to_back_weight = st.slider("⏳ Reduce back-to-back assignments", 0, 100, 50, help="Higher values reduce consecutive duties.")
+    
+    process_button = st.button("📝 Generate Schedule", disabled=not (date_availability_file and skills_mapping_file and jobs_file and (not use_max_roster or max_roster_file)))
 
-st.title("Church Duties Scheduling Tool")
+# Step Navigation
+tab1, tab2 = st.tabs(["📊 View Demo Data", "📌 Generate Schedule"])
 
-# Option to load demo files
-use_demo_files = st.checkbox("Load Demo Files")
-
-if use_demo_files:
+with tab1:
+    st.subheader("🔍 Demo Data Files")
+    st.markdown("""
+    ℹ️ **About Demo Files (Tick corresponds to 'TRUE' in your CSV/Excel file):**
+    - **(Required) Availability File:** Contains names and available dates.
+    - **(Required) Skills File:** Lists members and the jobs they can do.
+    - **(Required) Jobs File:** Defines crucial and non crucial roles. Solution must fill all crucial roles but not all non-crucial roles.
+    - **(Optional) Max Roster File:** Limits how many duties a person can take (-1 for no limit).
+    """)
+    
     demo_availability_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_date_availability.csv')
     demo_skills_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_skills_mapping.csv')
     demo_jobs_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_jobs.csv')
     demo_max_roster_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_max_roster.csv')
     
-    if demo_availability_file is not None and demo_skills_file is not None and demo_jobs_file is not None:
-        st.write("###### Demo Availability File (Provide Names and their available dates)", demo_availability_file)
-        st.write("###### Demo Skills File (Provide Names and the Jobs they can do)", demo_skills_file)
-        st.write("###### Demo Jobs File (Provide Job Names and which must be filled for each date)", demo_jobs_file)
-        st.write("###### Demo Max Roster File (Provide names and roster cap. -1 for no cap)", demo_max_roster_file)
+    if demo_availability_file is not None:
+        st.write("### 📅 Availability File", demo_availability_file)
+    if demo_skills_file is not None:
+        st.write("### 🛠 Skills File", demo_skills_file)
+    if demo_jobs_file is not None:
+        st.write("### 💼 Jobs File", demo_jobs_file)
+    if demo_max_roster_file is not None:
+        st.write("### 🔢 Max Roster File", demo_max_roster_file)
 
-date_availability_file = st.file_uploader("Upload Availability File", type=["csv", "xlsx", "xls"], key="availability")
-skills_mapping_file = st.file_uploader("Upload Skills File", type=["csv", "xlsx", "xls"], key="skills")
-jobs_file = st.file_uploader("Upload Jobs File", type=["csv", "xlsx", "xls"], key="jobs")
+with tab2:
+    st.subheader("🚀 Generate Schedule")
+    if process_button:
+        with st.spinner("⏳ Processing schedule..."):
+            try:
+                processed_df = process_csv(
+                    date_availability_file=date_availability_file, 
+                    skills_mapping_file=skills_mapping_file, 
+                    jobs_file=jobs_file, 
+                    max_roster_file=max_roster_file,
+                    total_assignments_weight=total_assignments_weight,
+                    deviation_weight=deviation_weight,
+                    back_to_back_weight=back_to_back_weight
+                )
+                
+                st.success("✅ Schedule generated successfully!")
+                st.dataframe(processed_df, use_container_width=True)
+                
+                csv_data = convert_df_to_csv(processed_df)
+                st.download_button("⬇️ Download Processed Schedule", data=csv_data, file_name="processed_schedule.csv", mime="text/csv")
+                
+            except Exception as e:
+                st.error(f"🚨 An error occurred: {e}")
+    else:
+        st.info("💡 No schedule generated yet. Upload files and click 'Generate Schedule' to start!")
 
-# Optional file uploaders
-use_max_roster = st.checkbox("Include Max Roster File")
-max_roster_file = None
-if use_max_roster:
-    max_roster_file = st.file_uploader("Upload Max Roster File", type=["csv", "xlsx", "xls"], key="max_roster")
-
-# Sliders for weight adjustments
-st.write("Adjust the priorities of that according to the needs of your roster. Higher number indicates higher priority.")
-total_assignments_weight = st.slider("Prioritise number of roles filled (Non-crucial Jobs)", min_value=0, max_value=100, value=0)
-deviation_weight = st.slider("Prioritise a balanced roster", min_value=0, max_value=100, value=0)
-back_to_back_weight = st.slider("Prioritise less back to back roster for each member", min_value=0, max_value=100, value=0)
-
-# Button to process the CSV
-process_button = st.button("Generate Schedule", disabled=not (date_availability_file and skills_mapping_file and jobs_file and (not use_max_roster or max_roster_file)))
-
-if process_button:
-    try:
-
-        processed_df = process_csv(
-            date_availability_file=date_availability_file, 
-            skills_mapping_file=skills_mapping_file, 
-            jobs_file=jobs_file, 
-            max_roster_file=max_roster_file,
-            total_assignments_weight=total_assignments_weight,
-            deviation_weight=deviation_weight,
-            back_to_back_weight=back_to_back_weight
-        )
-        st.write("### Processed CSV:", processed_df)
-
-        csv_data = convert_df_to_csv(processed_df)
-        st.download_button(label="Download Processed CSV", data=csv_data, file_name="processed_schedule.csv", mime="text/csv")
-    except Exception as e:
-        st.error(f"**An error occurred while processing the files.**\n\nError details: {e}")
-        st.write("Double check the input files and try again or contact the owner.")
-        st.write("If the issue persists, please reach out to Andrew.")
