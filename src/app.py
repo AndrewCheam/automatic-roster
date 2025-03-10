@@ -16,15 +16,14 @@ def convert_df_to_csv(df):
     return output
 
 
-def load_demo_file(file_name):
+def load_demo_file(file_path):
     try:
-        file_path = 'demo/' + file_name
-        return pd.read_excel(file_path, index_col=0)  # Or pd.read_excel(file_path) if it's an Excel file
+        return pd.read_csv(file_path, index_col=0)  # Or pd.read_excel(file_path) if it's an Excel file
     except FileNotFoundError:
-        st.error(f"**Error:** {file_name} not found in the 'demo' folder.")
+        st.error(f"**Error:** {file_path} not found.")
         return None
     except Exception as e:
-        st.error(f"**Error:** Something went wrong while reading {file_name}. Error details: {e}")
+        st.error(f"**Error:** Something went wrong while reading {file_path}. Error details: {e}")
         return None
 
 with st.sidebar:
@@ -45,10 +44,10 @@ st.title("Church Duties Scheduling Tool")
 use_demo_files = st.checkbox("Load Demo Files")
 
 if use_demo_files:
-    demo_availability_file = load_demo_file('demo_date_availability.xlsx')
-    demo_skills_file = load_demo_file('demo_skills_mapping.xlsx')
-    demo_jobs_file = load_demo_file('demo_jobs.xlsx')
-    demo_max_roster_file = load_demo_file('demo_max_roster.xlsx')
+    demo_availability_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_date_availability.csv')
+    demo_skills_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_skills_mapping.csv')
+    demo_jobs_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_jobs.csv')
+    demo_max_roster_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_max_roster.csv')
     
     if demo_availability_file is not None and demo_skills_file is not None and demo_jobs_file is not None:
         st.write("###### Demo Availability File (Provide Names and their available dates)", demo_availability_file)
