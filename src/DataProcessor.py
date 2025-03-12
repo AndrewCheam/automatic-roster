@@ -10,7 +10,8 @@ def load_data(**kwargs):
         skills_df = load_and_set_index(kwargs.get('skills_mapping_file'), "Names", "Skills")
         jobs_df = load_and_set_index(kwargs.get('jobs_file'), "Jobs", "Jobs")
 
-        max_roster_df = load_and_set_index(kwargs.get('max_roster_file'), "Names", "Max Roster") # Returns
+        max_roster_df = load_and_set_index(kwargs.get('max_roster_file'), "Names", "Max Roster")
+        proficiency_df = load_and_set_index(kwargs.get('proficiency_file'), "Names", "Proficiency")
 
     except ValueError as e:
         raise ValueError(str(e))  # Handle invalid file format or empty file errors
@@ -21,7 +22,9 @@ def load_data(**kwargs):
     data_dict['availability_df'] = availability_df
     data_dict['skills_df'] = skills_df
     data_dict['jobs_df'] = jobs_df
+    # Custom dfs
     data_dict['max_roster_df'] = max_roster_df
+    data_dict['proficiency_df'] = proficiency_df
     filtered_data_dict = {k: v for k, v in data_dict.items() if v is not None}
 
     test_data(**filtered_data_dict)

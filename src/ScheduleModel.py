@@ -1,6 +1,7 @@
 from ortools.sat.python import cp_model
 import pandas as pd
 import math
+import numpy as np
 
 class ScheduleModel:
     def __init__(self, **kwargs):
@@ -15,20 +16,27 @@ class ScheduleModel:
         self.crucial_jobs = kwargs.get('crucial_jobs')
         self.non_crucial_jobs = kwargs.get('non_crucial_jobs')
         self.total_assignments_weight = kwargs.get('total_assignments_weight')
-        self.deviation_weight = kwargs.get('deviation_weight')
+        self.assignment_deviation_weight = kwargs.get('assignment_deviation_weight')
         self.back_to_back_weight = kwargs.get('back_to_back_weight')
+        
         # Custom Requirements
         self.max_roster_df = kwargs.get('max_roster_df') # None if not present
+
+        if isinstance(kwargs.get("proficiency_df"), pd.DataFrame): 
+            self.proficiency_df = kwargs.get('proficiency_df') 
+        else:
+            # If proficiency_df not present, just take all proficiency as 1
+            self.proficiency_df = pd.DataFrame(index=self.all_members, columns=self.all_jobs, data=1)
+        self.proficiency_deviation_weight = kwargs.get('proficiency_deviation_weight')
 
         self.model = cp_model.CpModel()
         self.shifts = {}
         self.total_assignments = {}
         self.back_to_back = {}
         self.deviation = {}
-        self.squared_deviation = {}
+        self.squared_assignment_deviation = {}
+        self.total_proficiency_per_week = {}
 
-        
-        
 
         # Set Constraints and Objectives
         self._create_variables()
@@ -52,8 +60,8 @@ class ScheduleModel:
             for m in self.all_members
         }
         
-        self.squared_deviation = {
-            m: self.model.NewIntVar(0, (len(self.all_weeks) * len(self.all_jobs)) ** 2, f"squared_deviation_{m}")
+        self.squared_assignment_deviation = {
+            m: self.model.NewIntVar(0, (len(self.all_weeks) * len(self.all_jobs)) ** 2, f"squared_assignment_deviation_{m}")
             for m in self.all_members
         }
         
@@ -61,6 +69,13 @@ class ScheduleModel:
             m: self.model.NewIntVar(0, len(self.all_weeks) - 1, f"back_to_back_{m}")
             for m in self.all_members
         }
+        self.total_proficiency_per_week = {
+            w: self.model.NewIntVar(0, sum(self.proficiency_df.values.flatten()), f"total_proficiency_week_{w}")
+            for w in self.all_weeks
+        }
+
+        self.min_proficiency_per_week = self.model.NewIntVar(0, np.sum(self.proficiency_df.values), "min_proficiency_per_week")
+
 
     def _add_base_constraints(self):
         # Crucial job assignment constraints
@@ -92,18 +107,10 @@ class ScheduleModel:
                     for w in self.all_weeks:
                         self.model.Add(self.shifts[(m, w, j)] == 0)
         
-        # No member should be rostered three weeks in a row
-        # for m in self.all_members:
-        #     for w_idx in range(len(self.all_weeks) - 2):
-        #         self.model.Add(
-        #             sum([self.shifts[(m, self.all_weeks[w_idx], j)] for j in self.all_jobs]) +
-        #             sum([self.shifts[(m, self.all_weeks[w_idx + 1], j)] for j in self.all_jobs]) +
-        #             sum([self.shifts[(m, self.all_weeks[w_idx + 2], j)] for j in self.all_jobs])
-        #             <= 2
-        #         )
 
     def _add_custom_constraints(self):
         try:
+            # Max Rostering Constraint
             if isinstance(self.max_roster_df, pd.DataFrame):
                 for m in self.all_members:
                     max_shifts = self.max_roster_df.loc[m, "max_roster"]
@@ -113,15 +120,18 @@ class ScheduleModel:
             raise ValueError("One of the custom constraint didnt work...")
     
     def _set_objective(self):
+                
+        # Penalise Deviation in Assignments
         avg_assignments = len(self.all_weeks) * len(self.all_jobs) // len(self.all_members)
         for m in self.all_members:
             self.model.Add(self.total_assignments[m] == sum(self.shifts[(m, w, j)] for w in self.all_weeks for j in self.all_jobs))
+            # Get absolute deviation
             self.model.Add(self.deviation[m] >= self.total_assignments[m] - avg_assignments)
             self.model.Add(self.deviation[m] >= avg_assignments - self.total_assignments[m])
-            self.model.AddMultiplicationEquality(self.squared_deviation[m], [self.deviation[m], self.deviation[m]])
+            # Square deviation to penalise outliers more
+            self.model.AddMultiplicationEquality(self.squared_assignment_deviation[m], [self.deviation[m], self.deviation[m]])
 
-
-        # Consecutive week assignments
+        # Penalise Consecutive week assignments
         for m in self.all_members:
             consecutive_assignments = []
             for w_idx in range(len(self.all_weeks) - 1):
@@ -133,21 +143,45 @@ class ScheduleModel:
                 self.model.AddMultiplicationEquality(consecutive, [is_rostered_w, is_rostered_w_next])
                 consecutive_assignments.append(consecutive)
             self.model.Add(self.back_to_back[m] == sum(consecutive_assignments))
-        
+            
+
+        # Maximise the minimum proficiency across all weeks - naturally decreases deviation as well
+        for w in self.all_weeks:
+            self.model.Add(self.total_proficiency_per_week[w] == sum(
+                self.shifts[(m, w, j)] * self.proficiency_df.loc[m, j]
+                for m in self.all_members
+                for j in self.all_jobs
+            ))
+
+        # Ensure min_proficiency_per_week is the minimum among all weeks
+        self.model.AddMinEquality(self.min_proficiency_per_week, list(self.total_proficiency_per_week.values()))
+
+
         terms = []
         if self.total_assignments_weight != 0:
             terms.append(-sum(self.total_assignments[m] for m in self.all_members) * self.total_assignments_weight)
-        if self.deviation_weight != 0:
-            terms.append(sum(self.squared_deviation[m] for m in self.all_members) * self.deviation_weight)
+        if self.assignment_deviation_weight != 0:
+            terms.append(sum(self.squared_assignment_deviation[m] for m in self.all_members) * self.assignment_deviation_weight)
         if self.back_to_back_weight != 0:
             terms.append(sum(self.back_to_back[m] for m in self.all_members) * self.back_to_back_weight)
+        if self.proficiency_deviation_weight != 0 and self.proficiency_deviation_weight:
+            terms.append(-self.min_proficiency_per_week * self.proficiency_deviation_weight)
 
         if terms:
             self.model.Minimize(sum(terms))
 
-
-    
     def solve(self):
         solver = cp_model.CpSolver()
         status = solver.Solve(self.model)
         return solver, status
+
+    # def add_tri_roster_constraint(self):
+    #     # No member should be rostered three weeks in a row
+    #     for m in self.all_members:
+    #         for w_idx in range(len(self.all_weeks) - 2):
+    #             self.model.Add(
+    #                 sum([self.shifts[(m, self.all_weeks[w_idx], j)] for j in self.all_jobs]) +
+    #                 sum([self.shifts[(m, self.all_weeks[w_idx + 1], j)] for j in self.all_jobs]) +
+    #                 sum([self.shifts[(m, self.all_weeks[w_idx + 2], j)] for j in self.all_jobs])
+    #                 <= 2
+    #             )
