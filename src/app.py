@@ -89,7 +89,7 @@ with tab1:
     if demo_max_roster_file is not None:
         st.write("### 🔢 Max Roster File", demo_max_roster_file)
     if demo_proficiency_file is not None:
-        st.write("### 🔥 Proficiency File", demo_max_roster_file)
+        st.write("### 🔥 Proficiency File", demo_proficiency_file)
 
 with tab2:
     st.subheader("🚀 Generate Schedule")
