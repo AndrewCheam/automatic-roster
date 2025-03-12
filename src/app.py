@@ -5,6 +5,7 @@ from JobScheduler import JobScheduler
 
 st.set_page_config(page_title="Church Duties Scheduler", layout="wide")
 
+
 def process_csv(**kwargs):
     js = JobScheduler(**kwargs)
     df = js.schedule_jobs()
@@ -47,13 +48,17 @@ with st.sidebar:
     
     use_max_roster = st.checkbox("Include Max Roster File")
     max_roster_file = st.file_uploader("🔢 Upload Max Roster File", type=["csv", "xlsx"]) if use_max_roster else None
+
+    use_proficiency = st.checkbox("Include Proficiency File")
+    proficiency_file = st.file_uploader("🔥 Upload Proficiency File", type=["csv", "xlsx"]) if use_proficiency else None
     
     st.subheader("⚙️ Adjust Scheduling Priorities")
     total_assignments_weight = st.slider("🔄 Ensure more jobs are assigned", 0, 100, 50, help="Higher values prioritize filling all jobs.")
-    deviation_weight = st.slider("⚖️ Balance workload among members", 0, 100, 50, help="Higher values distribute work evenly.")
+    assignment_deviation_weight = st.slider("⚖️ Balance workload among members", 0, 100, 50, help="Higher values distribute work evenly.")
     back_to_back_weight = st.slider("⏳ Reduce back-to-back assignments", 0, 100, 50, help="Higher values reduce consecutive duties.")
+    proficiency_deviation_weight = st.slider("🔥 Balance and maximise proficiency across weeks", 0, 100, 50, help="Higher values distribute proficiency equally, and also increase proficiency across weeks.") if use_proficiency else None
     
-    process_button = st.button("📝 Generate Schedule", disabled=not (date_availability_file and skills_mapping_file and jobs_file and (not use_max_roster or max_roster_file)))
+    process_button = st.button("📝 Generate Schedule", disabled=not (date_availability_file and skills_mapping_file and jobs_file and (not use_max_roster or max_roster_file) and (not use_proficiency or proficiency_file)))
 
 # Step Navigation
 tab1, tab2 = st.tabs(["📊 View Demo Data", "📌 Generate Schedule"])
@@ -66,12 +71,14 @@ with tab1:
     - **(Required) Skills File:** Lists members and the jobs they can do.
     - **(Required) Jobs File:** Defines crucial and non crucial roles. Solution must fill all crucial roles but not all non-crucial roles.
     - **(Optional) Max Roster File:** Limits how many duties a person can take (-1 for no limit).
+    - **(Optional) Proficiency File:** Provides a proficiency score for each person and Job (0 if unable to do Job).
     """)
     
     demo_availability_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_date_availability.csv')
     demo_skills_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_skills_mapping.csv')
     demo_jobs_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_jobs.csv')
     demo_max_roster_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_max_roster.csv')
+    demo_proficiency_file = load_demo_file('https://raw.githubusercontent.com/AndrewCheam/automatic-roster/refs/heads/scheduler-backend/src/demo/demo_proficiency.csv')
     
     if demo_availability_file is not None:
         st.write("### 📅 Availability File", demo_availability_file)
@@ -81,6 +88,8 @@ with tab1:
         st.write("### 💼 Jobs File", demo_jobs_file)
     if demo_max_roster_file is not None:
         st.write("### 🔢 Max Roster File", demo_max_roster_file)
+    if demo_proficiency_file is not None:
+        st.write("### 🔥 Proficiency File", demo_max_roster_file)
 
 with tab2:
     st.subheader("🚀 Generate Schedule")
@@ -92,9 +101,11 @@ with tab2:
                     skills_mapping_file=skills_mapping_file, 
                     jobs_file=jobs_file, 
                     max_roster_file=max_roster_file,
+                    proficiency_file = proficiency_file,
                     total_assignments_weight=total_assignments_weight,
-                    deviation_weight=deviation_weight,
-                    back_to_back_weight=back_to_back_weight
+                    assignment_deviation_weight=assignment_deviation_weight,
+                    back_to_back_weight=back_to_back_weight,
+                    proficiency_deviation_weight=proficiency_deviation_weight
                 )
                 
                 st.success("✅ Schedule generated successfully!")

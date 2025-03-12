@@ -21,7 +21,7 @@ class JobScheduler:
 
     def schedule_jobs(self):
         """Solves the scheduling problem and returns a DataFrame of the schedule."""
-        model = ScheduleModel(**self.data)#, **self.custom_data)
+        model = ScheduleModel(**self.data)
         solver, status = model.solve()
         
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
