@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import ScheduleModel
+import plotly.graph_objects as go
+import seaborn as sns
+import plotly.express as px
 
 class SolutionViewer:
     def __init__(self, solver, model:ScheduleModel):
@@ -53,19 +56,78 @@ class SolutionViewer:
         """Generates analytics based on the schedule."""
         if self.schedule_df is None:
             raise ValueError("Schedule not generated. Call generate_schedule_df() first.")
-        
-        # Print total assignments per member
-        print("\nTotal Assignments per Member:")
-        for m in self.all_members:
-            total = self.solver.Value(self.total_assignments[m])
-            print(f"  - {m}: {total} jobs assigned")
-        
-        print("\nTotal Proficiency per Week:")
-        for w in self.all_weeks:
-            total = self.solver.Value(self.total_proficiency_per_week[w])
-            print(f"  - {w}: {total} proficiency")
+        # Set seaborn theme
+        sns.set_theme(style="whitegrid")
+        # Total assignments per member
+        assignments = {m: self.solver.Value(self.total_assignments[m]) for m in self.all_members}
+        sorted_assignments = dict(sorted(assignments.items(), key=lambda item: item[1], reverse=True))
+
+        # Bar chart for total assignments per member with different colors
+        fig_assignments = px.bar(
+            x=list(sorted_assignments.keys()),
+            y=list(sorted_assignments.values()),
+            color=list(sorted_assignments.values()),
+            color_continuous_scale="blues"
+        )
+        fig_assignments.update_layout(
+            # title="Total Assignments per Member",
+            xaxis_title="Member",
+            yaxis_title="Number of Assignments",
+            plot_bgcolor="#f7faff",
+            xaxis=dict(tickangle=-45)  # Tilt the x-axis labels
+        )
+
+        # Total proficiency per week
+        proficiency = {w: self.solver.Value(self.total_proficiency_per_week[w]) for w in self.all_weeks}
+
+        # Bar chart for total proficiency per week with consistent hue
+        fig_proficiency = px.bar(
+            x=list(proficiency.keys()),
+            y=list(proficiency.values()),
+            color=list(proficiency.values()),
+            color_continuous_scale="tealrose"
+        )
+        fig_proficiency.update_layout(
+            # title="Total Proficiency per Week",
+            xaxis_title="Week",
+            yaxis_title="Total Proficiency",
+            plot_bgcolor="#f7faff",
+            xaxis=dict(type='category')
+        )
+
+        # Back-to-back rosters heatmap
+        back_to_back_data = {m: self.solver.Value(self.back_to_back[m]) for m in self.all_members}
+        df_back_to_back = pd.DataFrame(list(back_to_back_data.items()), columns=["Member", "BackToBackCount"])
+
+        # Group the data by back-to-back count and get the list of members
+        back_to_back_summary = df_back_to_back.groupby('BackToBackCount').agg({
+            'Member': lambda x: ', '.join(x)  # Combine names into a single string
+        }).reset_index()
+
+        # Count the number of people for each back-to-back count
+        back_to_back_summary['NumPeople'] = back_to_back_summary['Member'].apply(lambda x: len(x.split(', ')))
+
+        # Bubble chart
+        fig_back_to_back = px.scatter(
+            back_to_back_summary,
+            x='BackToBackCount',
+            y='NumPeople',
+            size='NumPeople',
+            color='BackToBackCount',
+            hover_name='Member',  # Show names when hovering
+            size_max=50,
+            color_continuous_scale="Reds"
+        )
+        fig_back_to_back.update_layout(
+            # title="Back-to-Back Rosters Bubble Chart",
+            xaxis_title="Number of Back-to-Back Rosters",
+            yaxis_title="Number of People",
+            plot_bgcolor="#f7faff"
+        )
+
+        # Print additional metrics
         print(f"Squared Assignment Deviation: {sum(self.solver.Value(self.squared_assignment_deviation[m]) for m in self.all_members)}")
         print(f"Back to back rosters: {sum(self.solver.Value(self.back_to_back[m]) for m in self.all_members)}")
         print(f"Kena Back to Back Roster: {[m for m in self.all_members if self.solver.Value(self.back_to_back[m]) > 0]}")
-        
-        return None
+
+        return fig_assignments, fig_proficiency, fig_back_to_back
