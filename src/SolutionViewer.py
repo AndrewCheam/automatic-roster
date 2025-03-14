@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 import ScheduleModel
-import plotly.graph_objects as go
-import seaborn as sns
 import plotly.express as px
 
 class SolutionViewer:
@@ -56,8 +54,7 @@ class SolutionViewer:
         """Generates analytics based on the schedule."""
         if self.schedule_df is None:
             raise ValueError("Schedule not generated. Call generate_schedule_df() first.")
-        # Set seaborn theme
-        sns.set_theme(style="whitegrid")
+
         # Total assignments per member
         assignments = {m: self.solver.Value(self.total_assignments[m]) for m in self.all_members}
         sorted_assignments = dict(sorted(assignments.items(), key=lambda item: item[1], reverse=True))
