@@ -30,8 +30,8 @@ class JobScheduler:
                 solver, model
             )
             solution_df = viewer.generate_schedule_df()
-            viewer.analyze_schedule()
+            fig_assignments, fig_proficiency, fig_back_to_back = viewer.analyze_schedule()
             test_solution(solution_df, model.availability_df, model.skills_df)
-            return solution_df
+            return solution_df, fig_assignments, fig_proficiency, fig_back_to_back
         
         raise ValueError("\nNo solution found.")
