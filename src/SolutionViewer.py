@@ -2,19 +2,15 @@ import pandas as pd
 import numpy as np
 import ScheduleModel
 import plotly.express as px
+from ortools.sat.python import cp_model  # Assuming the solver is from OR-Tools
 
 class SolutionViewer:
-    def __init__(self, solver, model:ScheduleModel):
+    def __init__(self, solver: cp_model.CpSolver, model: ScheduleModel):
         """
         Initializes the ScheduleGenerator with the solver and scheduling constraints.
         
         :param solver: The solver instance with the solved schedule.
-        :param shifts: Dictionary of decision variables for shift assignments.
-        :param total_assignments: Dictionary tracking total assignments per member.
-        :param squared_assignment_deviation: Deviation metric for fairness evaluation.
-        :param all_members: List of all members.
-        :param all_weeks: List of all weeks.
-        :param all_jobs: List of all jobs.
+        :param model: The scheduling model containing constraints and variables.
         """
         self.solver = solver
         self.shifts = model.shifts
@@ -24,12 +20,11 @@ class SolutionViewer:
         self.all_members = model.all_members
         self.all_weeks = model.all_weeks
         self.all_jobs = model.all_jobs
-
         self.total_proficiency_per_week = model.total_proficiency_per_week
         
-        self.schedule_df = None
+        self.schedule_df: pd.DataFrame | None = None
 
-    def generate_schedule_df(self):
+    def generate_schedule_df(self) -> pd.DataFrame:
         """Converts the solver result into a Pandas DataFrame."""
         solution_df = pd.DataFrame()
         solution_df["Job"] = self.all_jobs
@@ -50,7 +45,7 @@ class SolutionViewer:
         self.schedule_df = solution_df
         return solution_df
 
-    def analyze_schedule(self):
+    def analyze_schedule(self) -> tuple[px.bar, px.bar, px.scatter]:
         """Generates analytics based on the schedule."""
         if self.schedule_df is None:
             raise ValueError("Schedule not generated. Call generate_schedule_df() first.")

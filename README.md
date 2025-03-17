@@ -1,118 +1,86 @@
-# Automated Roster Scheduling
+# Automatic Roster
 
-## Overview
+This project is designed to automate the scheduling of church duties. It uses various data inputs to generate an optimized schedule that balances workload, maximizes proficiency, and adheres to constraints such as availability and skill requirements.
 
-This project implements an automated roster scheduling system using Google OR-Tools' Constraint Programming (CP-SAT) solver. The system assigns jobs to members while considering constraints such as availability, required skills, fairness, and workload balancing. This was super useful! https://xiang.es/posts/cp-sat/
+## Try It Out
 
-## Features
+You can try out the application [here](https://auto-roster.streamlit.app/).
 
-### Basic Features:
+## Directory Structure
 
-- Ensures each crucial job is assigned exactly once per week.
-- Assigns non-crucial jobs to at most one member per week.
-- Ensures members are not over-assigned by limiting them to one job per week.
-- Accounts for member availability and skill requirements.
-- Prevents a member from being rostered three weeks in a row.
-- Implements fairness by minimizing variance in job assignments.
-- Outputs a CSV file containing the final schedule.
+- `src/`
+  - `app.py`: The main Streamlit application for interacting with the scheduling tool.
+  - `DataProcessor.py`: Handles loading and processing of input data files.
+  - `ScheduleModel.py`: Defines the scheduling model and constraints using OR-Tools.
+  - `SolutionViewer.py`: Visualizes the generated schedule and provides analytics.
+  - `test.py`: Contains functions for testing data quality and validating the generated schedule.
+  - `demo/`: Contains demo CSV files for testing and demonstration purposes.
 
-### Customizable Features:
+## Usage
 
-- **Max Roster Constraint:** Allows specifying a maximum number of times certain members can be rostered.
-- **Minimum Proficiency Constraint:** Ensures that the overall proficiency level for each week meets a required threshold.
-- **Optimizing Variance in Proficiency:** Balances proficiency levels across weeks to maintain an even skill distribution.
-- **Additional Custom Constraints:** Users can add new constraints based on specific scheduling requirements.
+### Step 1: Upload Required Files
+
+1. **Availability File**: A CSV/XLSX file containing names and their availability dates.
+2. **Skills File**: A CSV/XLSX file listing members and the jobs they can perform.
+3. **Jobs File**: A CSV/XLSX file defining crucial and non-crucial roles.
+
+### Step 2: Optional Constraint Files
+
+1. **Max Roster File**: A CSV/XLSX file limiting the number of duties a person can take.
+2. **Proficiency File**: A CSV/XLSX file providing proficiency scores for members.
+
+### Step 3: Adjust Scheduling Priorities
+
+Adjust the weights for various scheduling constraints using the sliders in the Streamlit sidebar.
+
+### Step 4: Generate Schedule
+
+Click the "Generate Schedule" button to process the schedule. The generated schedule and analytics will be displayed.
+
+### Step 5: Download Schedule
+
+Download the processed schedule as a CSV file.
+
+## Demo Data
+
+Demo data files are provided in the `demo/` directory for testing and demonstration purposes. These files include:
+
+- `demo_date_availability.csv`
+- `demo_skills_mapping.csv`
+- `demo_jobs.csv`
+- `demo_max_roster.csv`
+- `demo_proficiency.csv`
+
+## Testing
+
+The `test.py` file contains functions to test data quality and validate the generated schedule. These tests ensure that the input data meets the required standards and that the generated schedule adheres to the defined constraints.
 
 ## Dependencies
 
-Install dependencies using:
+- pandas
+- numpy
+- plotly
+- ortools
+- streamlit
+
+## Installation
+
+To install the required dependencies, run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Data Requirements
+## Running the Application
 
-The system requires the following CSV files:
-
-1. `data/jobs.csv` - Contains job information and whether each job is crucial.
-2. `data/date_availability.csv` - Specifies each member’s availability per week.
-3. `data/skills_mapping.csv` - Maps members to the jobs they are qualified for.
-4. `data/custom_constraints.csv` (optional) - Defines additional constraints such as max roster limits and minimum proficiency levels.
-
-## Usage
-
-### Step 1: Run the Streamlit Web App
-
-Launch the interactive web app using Streamlit:
+To run the Streamlit application, use the following command:
 
 ```bash
-streamlit run app.py
+streamlit run src/app.py
 ```
 
-This will open a web interface for uploading CSV files and generating a roster.
-
-### Step 2: Upload Data
-
-On the webpage, upload the required CSV files:
-
-- Availability File
-- Skills Mapping File
-- Jobs File
-
-The system will process the files and display the uploaded data before scheduling.
-
-### Step 3: Generate and View the Roster
-
-- The optimized schedule is displayed on the web interface.
-- A downloadable CSV file (`final_solution.csv`) is generated for further use.
-
-## Constraints Implemented
-
-- **Job Assignment:** Every crucial job must be assigned exactly once per week.
-- **Availability & Skills:** Members can only be assigned jobs they are available for and qualified to perform.
-- **Workload Management:** A member cannot be assigned a job for three consecutive weeks.
-- **Fairness:** The algorithm minimizes the variance in job assignments to ensure an equitable distribution.
-- **Custom Constraints:** Additional constraints such as max roster limits and proficiency balancing can be incorporated using `data/custom_constraints.csv`.
-
-## Output Example
-
-After running the scheduler, a CSV file (`final_solution.csv`) is generated with the following structure:
-
-| Job   | Week 1 | Week 2 | Week 3  | ... |
-| ----- | ------ | ------ | ------- | --- |
-| Job A | Alice  | Bob    | Charlie | ... |
-| Job B | Bob    | Alice  | David   | ... |
-
-Additionally, total assignments per member are displayed:
-
-```bash
-Total Assignments per Member:
-  - Alice: 3 jobs assigned
-  - Bob: 3 jobs assigned
-  - Charlie: 2 jobs assigned
-```
-
-## Work in Progress
-
-- **UI Enhancements:** Improving the web interface for better usability and visualization.
-- **Analytics & Insights:** Adding features to analyze:
-  - How many times each member is rostered.
-  - Skill distribution among rostered members.
-  - Fairness metrics and workload balancing.
-
-## Troubleshooting
-
-If the script does not find an optimal solution:
-
-- Check if all crucial jobs can be assigned given the availability and skills constraints.
-- Ensure that the `data/` CSV files are formatted correctly.
-- Modify constraints if necessary to improve feasibility.
+This will start the Streamlit server and open the application in your default web browser.
 
 ## License
 
-This project is released under the MIT License.
-
-## Author
-
-Andrew Cheam
+This project is licensed under the MIT License.

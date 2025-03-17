@@ -1,42 +1,45 @@
 from ortools.sat.python import cp_model
 import pandas as pd
-import math
 import numpy as np
+from typing import Dict, List, Tuple, Optional, Any
 
 class ScheduleModel:
-    def __init__(self, **kwargs):
-        
+    def __init__(self, **kwargs: Dict[str, Any]):
+        """
+        Initializes the ScheduleModel with the given parameters.
+
+        :param kwargs: Dictionary containing various parameters required for scheduling.
+        """
         # Base Requirements
-        self.availability_df = kwargs.get('availability_df')
-        self.skills_df = kwargs.get('skills_df')
-        self.jobs_df = kwargs.get('jobs_df')
-        self.all_members = kwargs.get('all_members')
-        self.all_weeks = kwargs.get('all_weeks')
-        self.all_jobs = kwargs.get('all_jobs')
-        self.crucial_jobs = kwargs.get('crucial_jobs')
-        self.non_crucial_jobs = kwargs.get('non_crucial_jobs')
-        self.total_assignments_weight = kwargs.get('total_assignments_weight')
-        self.assignment_deviation_weight = kwargs.get('assignment_deviation_weight')
-        self.back_to_back_weight = kwargs.get('back_to_back_weight')
+        self.availability_df: pd.DataFrame = kwargs.get('availability_df')
+        self.skills_df: pd.DataFrame = kwargs.get('skills_df')
+        self.jobs_df: pd.DataFrame = kwargs.get('jobs_df')
+        self.all_members: List[str] = kwargs.get('all_members')
+        self.all_weeks: List[str] = kwargs.get('all_weeks')
+        self.all_jobs: List[str] = kwargs.get('all_jobs')
+        self.crucial_jobs: List[str] = kwargs.get('crucial_jobs')
+        self.non_crucial_jobs: List[str] = kwargs.get('non_crucial_jobs')
+        self.total_assignments_weight: int = kwargs.get('total_assignments_weight')
+        self.assignment_deviation_weight: int = kwargs.get('assignment_deviation_weight')
+        self.back_to_back_weight: int = kwargs.get('back_to_back_weight')
         
         # Custom Requirements
-        self.max_roster_df = kwargs.get('max_roster_df') # None if not present
+        self.max_roster_df: Optional[pd.DataFrame] = kwargs.get('max_roster_df')  # None if not present
 
         if isinstance(kwargs.get("proficiency_df"), pd.DataFrame): 
-            self.proficiency_df = kwargs.get('proficiency_df') 
+            self.proficiency_df: Optional[pd.DataFrame] = kwargs.get('proficiency_df') 
         else:
             # If proficiency_df not present, just take all proficiency as 1
-            self.proficiency_df = pd.DataFrame(index=self.all_members, columns=self.all_jobs, data=1)
-        self.proficiency_deviation_weight = kwargs.get('proficiency_deviation_weight')
+            self.proficiency_df: Optional[pd.DataFrame] = pd.DataFrame(index=self.all_members, columns=self.all_jobs, data=1)
+        self.proficiency_deviation_weight: int = kwargs.get('proficiency_deviation_weight')
 
-        self.model = cp_model.CpModel()
-        self.shifts = {}
-        self.total_assignments = {}
-        self.back_to_back = {}
-        self.deviation = {}
-        self.squared_assignment_deviation = {}
-        self.total_proficiency_per_week = {}
-
+        self.model: cp_model.CpModel = cp_model.CpModel()
+        self.shifts: Dict[Tuple[str, str, str], cp_model.IntVar] = {}
+        self.total_assignments: Dict[str, cp_model.IntVar] = {}
+        self.back_to_back: Dict[str, cp_model.IntVar] = {}
+        self.deviation: Dict[str, cp_model.IntVar] = {}
+        self.squared_assignment_deviation: Dict[str, cp_model.IntVar] = {}
+        self.total_proficiency_per_week: Dict[str, cp_model.IntVar] = {}
 
         # Set Constraints and Objectives
         self._create_variables()
@@ -45,6 +48,7 @@ class ScheduleModel:
         self._set_objective()
     
     def _create_variables(self):
+        """Creates the decision variables for the model."""
         self.shifts = {
             (m, w, j): self.model.NewBoolVar(f"shift_m{m}_w{w}_j{j}")
             for m in self.all_members for w in self.all_weeks for j in self.all_jobs
@@ -78,6 +82,7 @@ class ScheduleModel:
 
 
     def _add_base_constraints(self):
+        """Adds the base constraints to the model."""
         # Crucial job assignment constraints
         for w in self.all_weeks:
             for j in self.crucial_jobs:
@@ -107,8 +112,8 @@ class ScheduleModel:
                     for w in self.all_weeks:
                         self.model.Add(self.shifts[(m, w, j)] == 0)
         
-
     def _add_custom_constraints(self):
+        """Adds custom constraints to the model."""
         try:
             # Max Rostering Constraint
             if isinstance(self.max_roster_df, pd.DataFrame):
@@ -117,10 +122,10 @@ class ScheduleModel:
                     if max_shifts != -1:  # Only enforce if there is a limit
                         self.model.Add(self.total_assignments[m] <= max_shifts)
         except:
-            raise ValueError("One of the custom constraint didnt work...")
-    
+            raise ValueError("One of the custom constraints didn't work...")
+
     def _set_objective(self):
-                
+        """Sets the objective function for the model."""
         # Penalise Deviation in Assignments
         avg_assignments = len(self.all_weeks) * len(self.all_jobs) // len(self.all_members)
         for m in self.all_members:
@@ -143,7 +148,6 @@ class ScheduleModel:
                 self.model.AddMultiplicationEquality(consecutive, [is_rostered_w, is_rostered_w_next])
                 consecutive_assignments.append(consecutive)
             self.model.Add(self.back_to_back[m] == sum(consecutive_assignments))
-            
 
         # Maximise the minimum proficiency across all weeks - naturally decreases deviation as well
         for w in self.all_weeks:
@@ -156,7 +160,7 @@ class ScheduleModel:
         # Ensure min_proficiency_per_week is the minimum among all weeks
         self.model.AddMinEquality(self.min_proficiency_per_week, list(self.total_proficiency_per_week.values()))
 
-
+        # Objective terms
         terms = []
         if self.total_assignments_weight != 0:
             terms.append(-sum(self.total_assignments[m] for m in self.all_members) * self.total_assignments_weight)
@@ -170,7 +174,12 @@ class ScheduleModel:
         if terms:
             self.model.Minimize(sum(terms))
 
-    def solve(self):
+    def solve(self) -> Tuple[cp_model.CpSolver, int]:
+        """
+        Solves the scheduling model.
+
+        :return: A tuple containing the solver instance and the status of the solution.
+        """
         solver = cp_model.CpSolver()
         status = solver.Solve(self.model)
         return solver, status

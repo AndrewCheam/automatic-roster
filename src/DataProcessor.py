@@ -1,28 +1,34 @@
 import pandas as pd
 from test import test_data
 
+def load_data(**kwargs: dict) -> dict:
+    """
+    Loads and processes the input data files, performs data quality checks, and returns a dictionary of DataFrames.
 
-def load_data(**kwargs):
+    Args:
+        kwargs (dict): Dictionary containing file objects for various data inputs.
 
+    Returns:
+        dict: Dictionary containing processed DataFrames.
+
+    Raises:
+        ValueError: If there is an issue with file format or missing columns.
+    """
     data_dict = kwargs
     try:
         availability_df = load_and_set_index(kwargs.get('date_availability_file'), "Names", "Availability")
         skills_df = load_and_set_index(kwargs.get('skills_mapping_file'), "Names", "Skills")
         jobs_df = load_and_set_index(kwargs.get('jobs_file'), "Jobs", "Jobs")
-
         max_roster_df = load_and_set_index(kwargs.get('max_roster_file'), "Names", "Max Roster")
         proficiency_df = load_and_set_index(kwargs.get('proficiency_file'), "Names", "Proficiency")
-
     except ValueError as e:
         raise ValueError(str(e))  # Handle invalid file format or empty file errors
-
     except KeyError as e:
         raise ValueError(str(e))  # Handle missing column errors
 
     data_dict['availability_df'] = availability_df
     data_dict['skills_df'] = skills_df
     data_dict['jobs_df'] = jobs_df
-    # Custom dfs
     data_dict['max_roster_df'] = max_roster_df
     data_dict['proficiency_df'] = proficiency_df
     filtered_data_dict = {k: v for k, v in data_dict.items() if v is not None}
@@ -31,7 +37,16 @@ def load_data(**kwargs):
 
     return filtered_data_dict
 
-def get_data(**kwargs):
+def get_data(**kwargs: dict) -> dict:
+    """
+    Loads data, processes it, and returns a dictionary with additional metadata.
+
+    Args:
+        kwargs (dict): Dictionary containing file objects for various data inputs.
+
+    Returns:
+        dict: Dictionary containing processed DataFrames and additional metadata.
+    """
     data_dict = load_data(**kwargs)
 
     availability_df = data_dict['availability_df']
@@ -53,14 +68,13 @@ def get_data(**kwargs):
     
     return data_dict
 
-
-def load_and_set_index(file, column_name, df_name="DataFrame"):
+def load_and_set_index(file: pd.io.parsers.TextFileReader, column_name: str, df_name: str = "DataFrame") -> pd.DataFrame:
     """
     Loads a CSV or Excel file into a DataFrame, checks if the specified column exists,
     sets it as the index, and returns the modified DataFrame.
 
     Args:
-        file (UploadedFile or None): The uploaded file object, or None.
+        file (pd.io.parsers.TextFileReader or None): The uploaded file object, or None.
         column_name (str): The column to set as the index.
         df_name (str): Optional name of the DataFrame for error messages.
 
