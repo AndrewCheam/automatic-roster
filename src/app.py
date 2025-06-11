@@ -4,6 +4,8 @@ from io import BytesIO
 from JobScheduler import JobScheduler
 from streamlit.components.v1 import html
 import time
+import traceback
+
 
 st.set_page_config(page_title="Church Duties Scheduler", layout="wide")
 
@@ -137,6 +139,7 @@ with tab2:
                 st.plotly_chart(fig_proficiency, use_container_width=True)
             except Exception as e:
                 st.error(f"🚨 An error occurred: {e}")
+                st.code(traceback.format_exc())  # Displays full traceback in a code block
             
     else:
         st.info("💡 No schedule generated yet. Upload files and click 'Generate Schedule' to start!")

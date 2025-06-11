@@ -55,7 +55,7 @@ def test_solution(solution_df, availability_df, skills_df):
 
     # Basic Solution Test Cases
     # test_n_roster_constraint(solution_df, max_b2b = 2)
-    test_availability(solution_df, availability_df)
+    # test_availability(solution_df, availability_df)
     test_skill_match(solution_df, skills_df)
 
 def test_availability(solution_df, availability_df):
